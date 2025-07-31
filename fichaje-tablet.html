@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Fichaje</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: #f2f2f2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 2.5vh;
+      margin-bottom: 2vh;
+    }
+
+    .botones {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1vh 2vw;
+      width: 90vw;
+      max-width: 800px;
+    }
+
+    .boton {
+      padding: 2vh 1vw;
+      font-size: 2vh;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.1s ease-in-out;
+      text-align: center;
+    }
+
+    .boton:hover {
+      transform: scale(1.05);
+    }
+
+    .entrada {
+      background-color: #4caf50;
+    }
+
+    .salida {
+      background-color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pulsa tu botón para fichar</h1>
+  <div class="botones">
+    <button class="boton entrada" onclick="fichar('Emilio Fernández Muñoz', 'entrada')">Emilio Fernández Muñoz - Entrada</button>
+    <button class="boton salida"  onclick="fichar('Emilio Fernández Muñoz', 'salida')">Emilio Fernández Muñoz - Salida</button>
+
+    <button class="boton entrada" onclick="fichar('Fernando Lloris Sánchez', 'entrada')">Fernando Lloris Sánchez - Entrada</button>
+    <button class="boton salida"  onclick="fichar('Fernando Lloris Sánchez', 'salida')">Fernando Lloris Sánchez - Salida</button>
+
+    <button class="boton entrada" onclick="fichar('Luis Bou García', 'entrada')">Luis Bou García - Entrada</button>
+    <button class="boton salida"  onclick="fichar('Luis Bou García', 'salida')">Luis Bou García - Salida</button>
+
+    <button class="boton entrada" onclick="fichar('Emilio Muñoz Usero', 'entrada')">Emilio Muñoz Usero - Entrada</button>
+    <button class="boton salida"  onclick="fichar('Emilio Muñoz Usero', 'salida')">Emilio Muñoz Usero - Salida</button>
+  </div>
+
+  <script>
+    function fichar(nombre, tipo) {
+      const url = 'https://script.google.com/macros/s/AKfycbwzQxAJdFse_7P-9_c2mM7SfKZ3kJJJ9Q187_qHimwLWaGIrP98sly47Pg-TGsVMBx9/exec';
+      fetch(`${url}?nombre=${encodeURIComponent(nombre)}&tipo=${tipo}`)
+        .then(() => alert(`Fichaje ${tipo} registrado para ${nombre}`))
+        .catch(() => alert('Error al fichar'));
+    }
+  </script>
+</body>
+</html>
