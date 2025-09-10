@@ -32,24 +32,31 @@
     <div class="grid">
       <button class="in"  onclick="fichar('Luis Bou Garcia','entrada')">Luis Bou Garcia — Entrada</button>
       <button class="out" onclick="fichar('Luis Bou Garcia','salida')">Luis Bou Garcia — Salida</button>
+
       <button class="in"  onclick="fichar('Emilio Muñoz Usero','entrada')">Emilio Muñoz Usero — Entrada</button>
       <button class="out" onclick="fichar('Emilio Muñoz Usero','salida')">Emilio Muñoz Usero — Salida</button>
+
       <button class="in"  onclick="fichar('Emilio Fernandez Muñoz','entrada')">Emilio Fernandez Muñoz — Entrada</button>
       <button class="out" onclick="fichar('Emilio Fernandez Muñoz','salida')">Emilio Fernandez Muñoz — Salida</button>
+
+      <button class="in"  onclick="fichar('Fernando Lloris Sanchez','entrada')">Fernando Lloris Sanchez — Entrada</button>
+      <button class="out" onclick="fichar('Fernando Lloris Sanchez','salida')">Fernando Lloris Sanchez — Salida</button>
     </div>
     <div id="status" class="status">Listo</div>
   </div>
 
-  <!-- Iframe oculto para enviar los fichajes -->
   <iframe name="hiddenFrame" style="display:none;"></iframe>
+
+  <audio id="beep" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  </audio>
 
   <script>
     const WEBAPP = "https://script.google.com/macros/s/AKfycbwzQxAJdFse_7P-9_c2mM7SfKZ3kJJJ9Q187_qHimwLWaGIrP98sly47Pg-TGsVMBx9/exec";
     const statusBox = document.getElementById('status');
+    const beep = document.getElementById('beep');
 
-    function setStatus(msg){
-      statusBox.textContent = msg;
-    }
+    function setStatus(msg){ statusBox.textContent = msg; }
 
     function fichar(nombre, tipo){
       const url = WEBAPP
@@ -57,13 +64,11 @@
         + "&tipo=" + encodeURIComponent(tipo)
         + "&t=" + Date.now();
 
-      // Feedback inmediato
       const stamp = new Date().toLocaleString("es-ES");
       setStatus(`OK ${nombre} — ${tipo} (${stamp})`);
+      beep.currentTime = 0; beep.play();
 
-      // Lanza la petición en segundo plano
-      const iframe = document.querySelector("iframe[name=hiddenFrame]");
-      iframe.src = url;
+      document.querySelector("iframe[name=hiddenFrame]").src = url;
     }
   </script>
 </body>
