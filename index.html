@@ -1,83 +1,69 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <title>Fichaje</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fichaje Puertas Lloris</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      background: #f2f2f2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    h1 {
-      font-size: 2.5vh;
-      margin-bottom: 2vh;
-    }
-
-    .botones {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1vh 2vw;
-      width: 90vw;
-      max-width: 800px;
-    }
-
-    .boton {
-      padding: 2vh 1vw;
-      font-size: 2vh;
-      border: none;
-      border-radius: 12px;
-      color: white;
-      cursor: pointer;
-      transition: transform 0.1s ease-in-out;
-      text-align: center;
-    }
-
-    .boton:hover {
-      transform: scale(1.05);
-    }
-
-    .entrada {
-      background-color: #4caf50;
-    }
-
-    .salida {
-      background-color: #f44336;
-    }
+    :root { --gap: 18px; }
+    body { margin: 0; font-family: system-ui, Arial, sans-serif; background: #f4f6f8; color: #111;
+           min-height: 100vh; display: grid; place-items: center; }
+    .wrap { width: 100%; max-width: 560px; padding: 24px; }
+    h1 { margin: 0 0 18px; font-size: 22px; text-align: center; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: var(--gap); }
+    @media (min-width: 460px) { .grid { grid-template-columns: 1fr 1fr; } }
+    button { appearance: none; border: 0; border-radius: 14px; padding: 18px 16px;
+             font-size: 18px; font-weight: 600; cursor: pointer; color: #fff;
+             box-shadow: 0 6px 16px rgba(0,0,0,.12); transition: transform .04s ease; width: 100%; }
+    button:active { transform: scale(.98); }
+    .in  { background: #16a34a; }   /* verde */
+    .out { background: #dc2626; }   /* rojo  */
+    .status { margin-top: var(--gap); padding: 14px 16px; border-radius: 12px; background: #fff;
+              border: 1px solid #e5e7eb; font-size: 15px; min-height: 48px; display: flex;
+              align-items: center; justify-content: center; text-align: center; }
   </style>
 </head>
 <body>
-  <h1>Pulsa tu botón para fichar</h1>
-  <div class="botones">
-    <button class="boton entrada" onclick="fichar('Emilio Fernández Muñoz', 'entrada')">Emilio Fernández Muñoz - Entrada</button>
-    <button class="boton salida"  onclick="fichar('Emilio Fernández Muñoz', 'salida')">Emilio Fernández Muñoz - Salida</button>
-
-    <button class="boton entrada" onclick="fichar('Fernando Lloris Sánchez', 'entrada')">Fernando Lloris Sánchez - Entrada</button>
-    <button class="boton salida"  onclick="fichar('Fernando Lloris Sánchez', 'salida')">Fernando Lloris Sánchez - Salida</button>
-
-    <button class="boton entrada" onclick="fichar('Luis Bou García', 'entrada')">Luis Bou García - Entrada</button>
-    <button class="boton salida"  onclick="fichar('Luis Bou García', 'salida')">Luis Bou García - Salida</button>
-
-    <button class="boton entrada" onclick="fichar('Emilio Muñoz Usero', 'entrada')">Emilio Muñoz Usero - Entrada</button>
-    <button class="boton salida"  onclick="fichar('Emilio Muñoz Usero', 'salida')">Emilio Muñoz Usero - Salida</button>
+  <div class="wrap">
+    <h1>Fichaje Puertas Lloris</h1>
+    <div class="grid">
+      <button class="in"  onclick="fichar('Luis Bou Garcia','entrada')">Luis Bou Garcia — Entrada</button>
+      <button class="out" onclick="fichar('Luis Bou Garcia','salida')">Luis Bou Garcia — Salida</button>
+      <button class="in"  onclick="fichar('Emilio Muñoz Usero','entrada')">Emilio Muñoz Usero — Entrada</button>
+      <button class="out" onclick="fichar('Emilio Muñoz Usero','salida')">Emilio Muñoz Usero — Salida</button>
+      <button class="in"  onclick="fichar('Emilio Fernandez Muñoz','entrada')">Emilio Fernandez Muñoz — Entrada</button>
+      <button class="out" onclick="fichar('Emilio Fernandez Muñoz','salida')">Emilio Fernandez Muñoz — Salida</button>
+    </div>
+    <div id="status" class="status">Listo</div>
   </div>
 
+  <!-- Iframe oculto para enviar los fichajes -->
+  <iframe name="hiddenFrame" style="display:none;"></iframe>
+
   <script>
-    function fichar(nombre, tipo) {
-      const url = 'https://script.google.com/macros/s/AKfycbwzQxAJdFse_7P-9_c2mM7SfKZ3kJJJ9Q187_qHimwLWaGIrP98sly47Pg-TGsVMBx9/exec';
-      fetch(`${url}?nombre=${encodeURIComponent(nombre)}&tipo=${tipo}`)
-        .then(() => alert(`Fichaje ${tipo} registrado para ${nombre}`))
-        .catch(() => alert('Error al fichar'));
+    const WEBAPP = "https://script.google.com/macros/s/AKfycbwzQxAJdFse_7P-9_c2mM7SfKZ3kJJJ9Q187_qHimwLWaGIrP98sly47Pg-TGsVMBx9/exec";
+    const statusBox = document.getElementById('status');
+
+    function setStatus(msg){
+      statusBox.textContent = msg;
+    }
+
+    function fichar(nombre, tipo){
+      const url = WEBAPP
+        + "?nombre=" + encodeURIComponent(nombre)
+        + "&tipo=" + encodeURIComponent(tipo)
+        + "&t=" + Date.now();
+
+      // Feedback inmediato
+      const stamp = new Date().toLocaleString("es-ES");
+      setStatus(`OK ${nombre} — ${tipo} (${stamp})`);
+
+      // Lanza la petición en segundo plano
+      const iframe = document.querySelector("iframe[name=hiddenFrame]");
+      iframe.src = url;
     }
   </script>
 </body>
