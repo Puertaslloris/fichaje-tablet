@@ -3,22 +3,30 @@
 <title>Fichaje</title>
 <body style="font-family:system-ui,Arial;padding:24px;text-align:center">
   <h3>Fichaje Puertas Lloris</h3>
-  <p>Pulsa el botón para registrar el fichaje.</p>
-  <p><button id="go" style="background:#16a34a;color:#fff;border:0;border-radius:10px;
-     padding:14px 18px;font-size:18px;font-weight:600">Fichar ahora</button></p>
-  <p><a id="link" href="#" style="font-size:14px;">Si no se abre, toca aquí</a></p>
-<script>
-  const p = new URLSearchParams(location.search);
-  const base = "https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
-  const url  = base + "?" + p.toString() + "&t=" + Date.now();
+  <p>Registrando fichaje…</p>
 
-  document.getElementById('link').href = url;
+  <script>
+    // Lee parámetros del email
+    const p = new URLSearchParams(location.search);
+    const base = "https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
+    // Llamada "beacon" que ejecuta el doGet sin navegar (evita Google Drive Viewer)
+    const url = base + "?" + p.toString() + "&plain=1&t=" + Date.now();
 
-  // Apertura en pestaña limpia: _blank -> about:blank -> luego WebApp
-  document.getElementById('go').addEventListener('click', () => {
-    const w = window.open('about:blank', '_blank', 'noopener');
-    if (w) { w.location = url; } else { location.href = url; }
-  });
+    // 1) Disparo inmediato como imagen invisible (GET anónimo)
+    const img = new Image();
+    img.width = img.height = 1; img.style = "position:absolute;left:-9999px;top:-9999px";
+    img.src = url;
+    document.body.appendChild(img);
 
-  // Sin auto–redir (quitado)
-</script>
+    // 2) También por fetch para asegurar (algunos iOS no cuentan IMG si se cancela)
+    try { fetch(url, {mode:"no-cors"}).catch(()=>{}); } catch(_){}
+
+    // 3) Mensaje de OK en pantalla y cierre opcional
+    const nombre = p.get('nombre') || '';
+    const tipo   = (p.get('tipo')||'').toUpperCase();
+    const stamp  = new Date().toLocaleString('es-ES');
+    const ok = document.createElement('p');
+    ok.innerHTML = `<b>OK ${nombre} — ${tipo}</b><br>${stamp}<br><small>Puedes cerrar esta pestaña.</small>`;
+    document.body.appendChild(ok);
+  </script>
+</body>
