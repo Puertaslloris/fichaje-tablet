@@ -12,16 +12,13 @@
   const base = "https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
   const url  = base + "?" + p.toString() + "&t=" + Date.now();
 
-  // Enlace visible por si el popup es bloqueado
   document.getElementById('link').href = url;
 
-  // Apertura por gesto del usuario: evita el visor de Gmail/iOS
+  // Apertura en pestaña limpia: _blank -> about:blank -> luego WebApp
   document.getElementById('go').addEventListener('click', () => {
-    // preferimos nueva pestaña para forzar navegador del sistema
-    window.open(url, '_blank', 'noopener');
+    const w = window.open('about:blank', '_blank', 'noopener');
+    if (w) { w.location = url; } else { location.href = url; }
   });
 
-  // Intento pasivo (por si no es Gmail/iOS)
-  setTimeout(() => { try { location.href = url; } catch(_){} }, 600);
+  // Sin auto–redir (quitado)
 </script>
-</body>
