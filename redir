@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fichaje</title>
+<script>
+  const p = new URLSearchParams(location.search);
+  const base = "https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
+  const url  = base + "?" + p.toString() + "&t=" + Date.now();
+  location.replace(url);
+</script>
+<body style="font-family:system-ui,Arial;padding:24px;text-align:center">
+  Redirigiendo…
+</body>
