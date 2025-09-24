@@ -9,6 +9,8 @@
   body{margin:0;font-family:system-ui,Arial,sans-serif;background:#edf1f5;color:#0f172a}
   .wrap{max-width:880px;margin:10px auto 84px;padding:0 12px}
   h1{text-align:center;margin:0 0 12px;font-size:22px;font-weight:800}
+
+  /* Cámara */
   .camWrap{display:flex;justify-content:center;margin-bottom:14px}
   .card{width:min(340px,90vw);background:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,.08);padding:10px}
   .card h3{margin:0 0 6px;font-size:13px;font-weight:700;text-align:center}
@@ -16,6 +18,8 @@
   video{width:100%;height:100%;display:block;transform:scaleX(-1)}
   canvas{display:none}
   .hint{text-align:center;font-size:12px;color:#666;margin-top:6px}
+
+  /* 2×2 */
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .row{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);
        padding:10px;display:flex;flex-direction:column;align-items:center}
@@ -31,6 +35,8 @@
     content:"Enviando…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     border-radius:inherit;background:rgba(0,0,0,.22);color:#fff;font-weight:700;font-size:13px
   }
+
+  /* Barra estado */
   .bar{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);
        width:min(860px,94vw);background:#fff;border-radius:12px;
        box-shadow:0 12px 28px rgba(0,0,0,.18);
@@ -42,6 +48,7 @@
 <body>
 <div class="wrap">
   <h1>Fichaje Puertas Lloris</h1>
+
   <div class="camWrap">
     <section class="card">
       <h3>Cámara</h3>
@@ -49,11 +56,19 @@
       <div id="camStatus" class="hint">Inicializando cámara…</div>
     </section>
   </div>
+
   <div id="grid" class="grid"></div>
 </div>
+
 <div id="bar" class="bar" hidden><span id="barMsg" class="msg-ok">Listo</span></div>
 
-<audio id="beepAudio" preload="auto"><source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg"></audio>
+<!-- GET por iframe (evita CORS) -->
+<iframe id="hiddenFrame" name="hiddenFrame" style="display:none"></iframe>
+
+<!-- Beep fallback -->
+<audio id="beepAudio" preload="auto">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
 
 <script>
 /*** CONFIG ***/
@@ -65,12 +80,13 @@ const TARGET_WIDTH=420, JPEG_QUALITY=0.5;
 const grid=document.getElementById('grid');
 const bar=document.getElementById('bar'), barMsg=document.getElementById('barMsg');
 const video=document.getElementById('video'), canvas=document.getElementById('canvas'), camStatus=document.getElementById('camStatus');
+const hiddenFrame=document.getElementById('hiddenFrame');
 const beepTag=document.getElementById('beepAudio');
 
-/*** Audio ***/
+/*** Audio persistente ***/
 let AC=null;
 function unlockAudioOnce(){ if(AC) return; try{ const Ctx=window.AudioContext||window.webkitAudioContext; AC=new Ctx(); AC.resume&&AC.resume(); const o=AC.createOscillator(),g=AC.createGain(); g.gain.value=0;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+0.01);}catch{} }
-function beepOk(){ try{ if(!AC){const Ctx=window.AudioContext||window.webkitAudioContext;AC=new Ctx();} AC.resume&&AC.resume(); const o=AC.createOscillator(),g=AC.createGain(); o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(0.06,AC.currentTime);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+0.12);}catch{ try{beepTag.currentTime=0;beepTag.play().catch(()=>{});}catch{} } }
+function beepOk(){ try{ if(!AC){const Ctx=window.AudioContext||window.webkitAudioContext;AC=new Ctx();} AC.resume&&AC.resume(); const o=AC.createOscillator(),g=AC.createGain(); o.type='sine';o.frequency.value=880; g.gain.setValueAtTime(0.06,AC.currentTime); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.12);}catch{ try{beepTag.currentTime=0;beepTag.play().catch(()=>{});}catch{} } }
 
 /*** Cámara ***/
 let camReady=false;
@@ -82,23 +98,51 @@ function setBar(msg,ok=true){ barMsg.textContent=msg; barMsg.className=ok?'msg-o
 function beacon(url,obj){ try{ const blob=new Blob([JSON.stringify(obj)],{type:'text/plain;charset=UTF-8'}); navigator.sendBeacon(url,blob);}catch{} }
 function jsonp(url,cb){ const id='cb_'+Math.random().toString(36).slice(2); window[id]=d=>{ try{cb(d);}finally{ delete window[id]; s.remove(); } }; const s=document.createElement('script'); s.src=url+(url.includes('?')?'&':'?')+'callback='+id; s.onerror=()=>{ try{cb({ok:false});}finally{ delete window[id]; s.remove(); } }; document.head.appendChild(s); }
 
-/*** Fichaje ***/
+/*** Confirmación rápida (poll a /check) ***/
+function pollConfirm(nombre, afterIso, onOk, onTimeout, attempts=30, delay=300){
+  const urlBase=`${ENDPOINT}?check=1&nombre=${encodeURIComponent(nombre)}&after=${encodeURIComponent(afterIso)}`;
+  (function step(n){
+    jsonp(urlBase, r=>{
+      if(r && r.ok){ onOk(r); return; }
+      if(n<=1){ onTimeout(); return; }
+      setTimeout(()=>step(n-1), delay);
+    });
+  })(attempts);
+}
+
+/*** Fichaje: iframe GET + foto inmediata + beep al primer /check OK ***/
 function ficha(nombre,tipo,btn){
   unlockAudioOnce();
+
+  // UI “Enviando…”
   btn.setAttribute('aria-busy','true');
   setBar(`Enviando — ${nombre} · ${tipo.toUpperCase()}`, true);
 
+  // Marca tiempo de referencia para /check
+  const afterIso = new Date().toISOString();
+
+  // Foto inmediata (no bloquea) + reintento luego
   const durl=captureDataURL();
   if(durl) beacon(ENDPOINT,{photo:durl,nombre,tipo});
 
-  const url=`${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}`;
-  jsonp(url, r=>{
-    btn.removeAttribute('aria-busy');
-    if(!r||!r.ok){ setBar(`${nombre} — error`,false); return; }
-    beepOk();
-    setBar(`OK ${nombre} — ${tipo.toUpperCase()} ${r.hora}`, true);
-    if(durl) beacon(ENDPOINT,{token:r.token||'',photo:durl,nombre,tipo});
-  });
+  // Disparo alta por GET (rápido pero puede tardar en cargar la respuesta)
+  const url = `${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}&t=${Date.now()}`;
+  hiddenFrame.src = url;
+
+  // Poll /check: en cuanto confirme, beep + OK
+  pollConfirm(
+    nombre, afterIso,
+    (r)=>{ // onOk
+      btn.removeAttribute('aria-busy');
+      beepOk();
+      setBar(`OK ${nombre} — ${tipo.toUpperCase()} ${r.hora||''}`, true);
+      if(durl) setTimeout(()=>beacon(ENDPOINT,{photo:durl,nombre,tipo}), 300); // reintento para casar
+    },
+    ()=>{ // onTimeout
+      btn.removeAttribute('aria-busy');
+      setBar(`${nombre} — no confirmado aún`, false);
+    }
+  );
 }
 
 /*** Render 2×2 ***/
