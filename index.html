@@ -2,74 +2,115 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Fichaje Puertas Lloris</title>
   <style>
-    :root { --gap: 18px; }
-    body { margin: 0; font-family: system-ui, Arial, sans-serif; background: #f4f6f8; color: #111;
-           min-height: 100vh; display: grid; place-items: center; }
-    .wrap { width: 100%; max-width: 560px; padding: 24px; }
-    h1 { margin: 0 0 18px; font-size: 22px; text-align: center; }
-    .grid { display: grid; grid-template-columns: 1fr; gap: var(--gap); }
-    @media (min-width: 460px) { .grid { grid-template-columns: 1fr 1fr; } }
-    button { appearance: none; border: 0; border-radius: 14px; padding: 18px 16px;
-             font-size: 18px; font-weight: 600; cursor: pointer; color: #fff;
-             box-shadow: 0 6px 16px rgba(0,0,0,.12); transition: transform .04s ease; width: 100%; }
-    button:active { transform: scale(.98); }
-    .in  { background: #16a34a; }   /* verde */
-    .out { background: #dc2626; }   /* rojo  */
-    .status { margin-top: var(--gap); padding: 14px 16px; border-radius: 12px; background: #fff;
-              border: 1px solid #e5e7eb; font-size: 15px; min-height: 48px; display: flex;
-              align-items: center; justify-content: center; text-align: center; }
+    :root{ --gap:14px; --btnH:60px; --green:#16a34a; --red:#dc2626; }
+    body{ margin:0; font-family:system-ui,Arial,sans-serif; background:#f4f6f8; color:#111; }
+    .wrap{ max-width:500px; margin:0 auto; padding:var(--gap); text-align:center; }
+    h1{ font-size:22px; margin:12px 0 18px; }
+
+    .card{ background:#fff; border-radius:14px; box-shadow:0 4px 18px rgba(0,0,0,.12); padding:10px; margin-bottom:var(--gap); }
+    .cam{ width:100%; aspect-ratio:4/3; background:#000; border-radius:10px; overflow:hidden; }
+    video{ width:100%; height:100%; display:block; transform:scaleX(-1); } /* espejo */
+    canvas{ display:none; }
+
+    select{ width:100%; padding:12px; font-size:16px; border-radius:10px; border:1px solid #ccc; margin-bottom:var(--gap); }
+
+    .btns{ display:flex; gap:var(--gap); }
+    button{ flex:1; height:var(--btnH); border:0; border-radius:12px; font-size:18px; font-weight:700;
+            color:#fff; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.15); }
+    button:active{ transform:scale(.98); }
+    .in{ background:var(--green); }
+    .out{ background:var(--red); }
+
+    .bar{ margin-top:var(--gap); padding:12px; border-radius:12px; background:#fff;
+          box-shadow:0 4px 12px rgba(0,0,0,.15); font-weight:700; }
+    .ok{ color:#0f6b35; } .err{ color:#b91c1c; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Fichaje Puertas Lloris</h1>
-    <div class="grid">
-      <button class="in"  onclick="fichar('Luis Bou Garcia','entrada')">Luis Bou Garcia — Entrada</button>
-      <button class="out" onclick="fichar('Luis Bou Garcia','salida')">Luis Bou Garcia — Salida</button>
 
-      <button class="in"  onclick="fichar('Emilio Muñoz Usero','entrada')">Emilio Muñoz Usero — Entrada</button>
-      <button class="out" onclick="fichar('Emilio Muñoz Usero','salida')">Emilio Muñoz Usero — Salida</button>
-
-      <button class="in"  onclick="fichar('Emilio Fernandez Muñoz','entrada')">Emilio Fernandez Muñoz — Entrada</button>
-      <button class="out" onclick="fichar('Emilio Fernandez Muñoz','salida')">Emilio Fernandez Muñoz — Salida</button>
-
-      <button class="in"  onclick="fichar('Fernando Lloris Sanchez','entrada')">Fernando Lloris Sanchez — Entrada</button>
-      <button class="out" onclick="fichar('Fernando Lloris Sanchez','salida')">Fernando Lloris Sanchez — Salida</button>
+    <div class="card">
+      <div class="cam">
+        <video id="video" playsinline autoplay muted></video>
+        <canvas id="canvas"></canvas>
+      </div>
+      <div id="camStatus" style="font-size:12px;color:#666;margin-top:6px;">Cargando cámara…</div>
     </div>
-    <div id="status" class="status">Listo</div>
+
+    <select id="worker">
+      <option value="">Selecciona trabajador…</option>
+      <option>Luis Bou Garcia</option>
+      <option>Emilio Muñoz Usero</option>
+      <option>Emilio Fernandez Muñoz</option>
+      <option>Fernando Lloris Sanchez</option>
+    </select>
+
+    <div class="btns">
+      <button class="in" onclick="fichar('entrada')">Entrada</button>
+      <button class="out" onclick="fichar('salida')">Salida</button>
+    </div>
+
+    <div id="status" class="bar">Listo</div>
   </div>
 
-  <iframe name="hiddenFrame" style="display:none;"></iframe>
-
-  <audio id="beep" preload="auto">
+  <audio id="beep">
     <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
   </audio>
 
-  <script>
-    const WEBAPP = "https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
-    const statusBox = document.getElementById('status');
-    const beep = document.getElementById('beep');
+<script>
+const WEBAPP="https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
+const video=document.getElementById("video"), canvas=document.getElementById("canvas"), camStatus=document.getElementById("camStatus");
+const beep=document.getElementById("beep"), statusBox=document.getElementById("status");
+let camReady=false;
 
-    function setStatus(msg){ statusBox.textContent = msg; }
+// Cámara
+(async()=>{
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:false});
+    video.srcObject=stream; await video.play().catch(()=>{});
+    camReady=true; camStatus.textContent="Cámara lista";
+  }catch(e){ camStatus.textContent="Sin acceso a cámara"; }
+})();
+function captureDataURL(){
+  if(!camReady||!video.videoWidth) return "";
+  canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+  canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL("image/jpeg",0.6);
+}
 
-    function fichar(nombre, tipo){
-      const url = WEBAPP
-        + "?nombre=" + encodeURIComponent(nombre)
-        + "&tipo=" + encodeURIComponent(tipo)
-        + "&t=" + Date.now();
+// Estado
+function setStatus(msg,ok=true){ statusBox.textContent=msg; statusBox.className="bar "+(ok?"ok":"err"); }
 
-      const stamp = new Date().toLocaleString("es-ES");
-      setStatus(`OK ${nombre} — ${tipo} (${stamp})`);
-      beep.currentTime = 0; beep.play();
+// Beep
+function playBeep(){ beep.currentTime=0; beep.play().catch(()=>{}); }
 
-      document.querySelector("iframe[name=hiddenFrame]").src = url;
-    }
-  </script>
+// JSONP
+function jsonp(url,cb){ const id="cb_"+Math.random().toString(36).slice(2);
+  window[id]=d=>{cb(d);delete window[id];s.remove();};
+  const s=document.createElement("script"); s.src=url+(url.includes("?")?"&":"?")+"callback="+id;
+  s.onerror=()=>{cb({ok:false,error:"jsonp"});delete window[id];s.remove();};
+  document.head.appendChild(s);
+}
+
+// Fichar
+function fichar(tipo){
+  const nombre=document.getElementById("worker").value;
+  if(!nombre){ setStatus("Selecciona trabajador",false); return; }
+
+  jsonp(`${WEBAPP}?nombre=${encodeURIComponent(nombre)}&tipo=${tipo}`, r=>{
+    if(!r||!r.ok){ setStatus("Error al fichar",false); return; }
+    const stamp=new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    setStatus(`OK ${nombre} — ${tipo} (${stamp})`,true);
+    playBeep();
+
+    const durl=captureDataURL();
+    if(durl){ navigator.sendBeacon(WEBAPP, JSON.stringify({token:r.token||"", photo:durl, nombre, tipo})); }
+  });
+}
+</script>
 </body>
 </html>
