@@ -5,29 +5,29 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Fichaje Puertas Lloris</title>
   <style>
-    :root { --gap:16px; --btnH:54px; --green:#16a34a; --red:#dc2626; }
+    :root { --gap:12px; --btnH:44px; --green:#16a34a; --red:#dc2626; }
     body { margin:0; font-family:system-ui,Arial,sans-serif; background:#f4f6f8; color:#111; }
     .wrap { max-width:720px; margin:0 auto; padding:var(--gap); }
-    h1 { text-align:center; font-size:22px; margin:10px 0 18px; }
+    h1 { text-align:center; font-size:20px; margin:6px 0 12px; }
 
-    .card { background:#fff; border-radius:14px; box-shadow:0 4px 18px rgba(0,0,0,.12); padding:10px; margin-bottom:var(--gap); }
-    .cam { width:100%; aspect-ratio:4/3; background:#000; border-radius:10px; overflow:hidden; }
-    video { width:100%; height:100%; display:block; transform:scaleX(-1); } /* espejo */
+    .card { background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.1); padding:6px; margin-bottom:var(--gap); }
+    .cam { width:100%; aspect-ratio:4/3; background:#000; border-radius:8px; overflow:hidden; }
+    video { width:100%; height:100%; display:block; transform:scaleX(-1); }
     canvas { display:none; }
-    #camStatus { font-size:12px; color:#666; margin-top:6px; text-align:center; }
+    #camStatus { font-size:11px; color:#666; margin-top:4px; text-align:center; }
 
     .grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); }
-    .worker { background:#fff; border-radius:12px; padding:10px; box-shadow:0 2px 8px rgba(0,0,0,.08); text-align:center; }
-    .name { font-weight:700; margin-bottom:10px; }
-    .btns { display:flex; gap:10px; }
-    button { flex:1; height:var(--btnH); border:0; border-radius:10px; font-size:15px; font-weight:700;
-             color:#fff; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.15); }
-    button:active { transform:scale(.97); }
+    .worker { background:#fff; border-radius:10px; padding:8px; box-shadow:0 1px 6px rgba(0,0,0,.08); text-align:center; }
+    .name { font-weight:700; margin-bottom:6px; font-size:14px; }
+    .btns { display:flex; gap:6px; }
+    button { flex:1; height:var(--btnH); border:0; border-radius:8px; font-size:14px; font-weight:700;
+             color:#fff; cursor:pointer; }
     .in { background:var(--green); }
     .out { background:var(--red); }
+    button:active { transform:scale(.97); }
 
-    .bar { margin-top:var(--gap); padding:12px; border-radius:12px; background:#fff;
-           box-shadow:0 4px 12px rgba(0,0,0,.15); font-weight:700; text-align:center; }
+    .bar { margin-top:var(--gap); padding:10px; border-radius:10px; background:#fff;
+           box-shadow:0 2px 8px rgba(0,0,0,.15); font-weight:700; font-size:13px; text-align:center; }
     .ok { color:#0f6b35; } .err { color:#b91c1c; }
   </style>
 </head>
@@ -73,7 +73,7 @@ function captureDataURL(){
   return canvas.toDataURL("image/jpeg",0.6);
 }
 
-// Estado y beep
+// Estado + beep
 function setStatus(msg,ok=true){ statusBox.textContent=msg; statusBox.className="bar "+(ok?"ok":"err"); }
 function playBeep(){ beep.currentTime=0; beep.play().catch(()=>{}); }
 
