@@ -62,9 +62,6 @@
 
 <div id="bar" class="bar" hidden><span id="barMsg" class="msg-ok">Listo</span></div>
 
-<!-- GET por iframe (evita CORS) -->
-<iframe id="hiddenFrame" name="hiddenFrame" style="display:none"></iframe>
-
 <!-- Beep fallback -->
 <audio id="beepAudio" preload="auto">
   <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
@@ -80,7 +77,6 @@ const TARGET_WIDTH=420, JPEG_QUALITY=0.5;
 const grid=document.getElementById('grid');
 const bar=document.getElementById('bar'), barMsg=document.getElementById('barMsg');
 const video=document.getElementById('video'), canvas=document.getElementById('canvas'), camStatus=document.getElementById('camStatus');
-const hiddenFrame=document.getElementById('hiddenFrame');
 const beepTag=document.getElementById('beepAudio');
 
 /*** Audio persistente ***/
@@ -96,53 +92,31 @@ function captureDataURL(){ if(!camReady||!video.videoWidth) return ''; const vw=
 /*** Utils ***/
 function setBar(msg,ok=true){ barMsg.textContent=msg; barMsg.className=ok?'msg-ok':'msg-err'; bar.hidden=false; }
 function beacon(url,obj){ try{ const blob=new Blob([JSON.stringify(obj)],{type:'text/plain;charset=UTF-8'}); navigator.sendBeacon(url,blob);}catch{} }
-function jsonp(url,cb){ const id='cb_'+Math.random().toString(36).slice(2); window[id]=d=>{ try{cb(d);}finally{ delete window[id]; s.remove(); } }; const s=document.createElement('script'); s.src=url+(url.includes('?')?'&':'?')+'callback='+id; s.onerror=()=>{ try{cb({ok:false});}finally{ delete window[id]; s.remove(); } }; document.head.appendChild(s); }
-
-/*** Confirmación rápida (poll a /check) ***/
-function pollConfirm(nombre, afterIso, onOk, onTimeout, attempts=30, delay=300){
-  const urlBase=`${ENDPOINT}?check=1&nombre=${encodeURIComponent(nombre)}&after=${encodeURIComponent(afterIso)}`;
-  (function step(n){
-    jsonp(urlBase, r=>{
-      if(r && r.ok){ onOk(r); return; }
-      if(n<=1){ onTimeout(); return; }
-      setTimeout(()=>step(n-1), delay);
-    });
-  })(attempts);
+function jsonp(url,cb){ const id='cb_'+Math.random().toString(36).slice(2);
+  const timeout=setTimeout(()=>{cleanup(); cb({ok:false,timeout:true});},6000); // guarda-UI 6s
+  function cleanup(){ try{ delete window[id]; s.remove(); }catch{} clearTimeout(timeout); }
+  window[id]=d=>{ cleanup(); cb(d); };
+  const s=document.createElement('script'); s.src=url+(url.includes('?')?'&':'?')+'callback='+id; s.onerror=()=>{ cleanup(); cb({ok:false}); }; document.head.appendChild(s);
 }
 
-/*** Fichaje: iframe GET + foto inmediata + beep al primer /check OK ***/
+/*** Fichaje (JSONP directo + foto por beacon) ***/
 function ficha(nombre,tipo,btn){
   unlockAudioOnce();
-
-  // UI “Enviando…”
   btn.setAttribute('aria-busy','true');
   setBar(`Enviando — ${nombre} · ${tipo.toUpperCase()}`, true);
 
-  // Marca tiempo de referencia para /check
-  const afterIso = new Date().toISOString();
-
-  // Foto inmediata (no bloquea) + reintento luego
+  // Foto inmediata y reintento tras OK
   const durl=captureDataURL();
   if(durl) beacon(ENDPOINT,{photo:durl,nombre,tipo});
 
-  // Disparo alta por GET (rápido pero puede tardar en cargar la respuesta)
-  const url = `${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}&t=${Date.now()}`;
-  hiddenFrame.src = url;
-
-  // Poll /check: en cuanto confirme, beep + OK
-  pollConfirm(
-    nombre, afterIso,
-    (r)=>{ // onOk
-      btn.removeAttribute('aria-busy');
-      beepOk();
-      setBar(`OK ${nombre} — ${tipo.toUpperCase()} ${r.hora||''}`, true);
-      if(durl) setTimeout(()=>beacon(ENDPOINT,{photo:durl,nombre,tipo}), 300); // reintento para casar
-    },
-    ()=>{ // onTimeout
-      btn.removeAttribute('aria-busy');
-      setBar(`${nombre} — no confirmado aún`, false);
-    }
-  );
+  const url=`${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}`;
+  jsonp(url, r=>{
+    btn.removeAttribute('aria-busy');
+    if(!r||!r.ok){ setBar(`${nombre} — error`,false); return; }
+    beepOk();
+    setBar(`OK ${nombre} — ${tipo.toUpperCase()} ${r.hora||''}`, true);
+    if(durl) beacon(ENDPOINT,{token:r.token||'',photo:durl,nombre,tipo});
+  });
 }
 
 /*** Render 2×2 ***/
