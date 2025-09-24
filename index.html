@@ -1,200 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Fichaje Puertas Lloris</title>
 <style>
-  :root{
-    --gap:14px; --maxw:900px;
-    --btnH:48px; --btnFS:17px; --nameFS:16px;
-    --green:#168a40; --green2:#0f6b35; --red:#c43535; --red2:#a12626;
-  }
-  *{box-sizing:border-box}
+  :root{--gap:14px;--btnH:46px;--btnFS:15px;--nameFS:15px}
   body{margin:0;font-family:system-ui,Arial,sans-serif;background:#edf1f5;color:#0f172a}
-  .wrap{max-width:var(--maxw);margin:10px auto 84px;padding:0 12px}
-  h1{text-align:center;margin:0 0 10px;font-size:22px;font-weight:800}
-
-  /* Cámara */
-  .camWrap{display:flex;justify-content:center;margin-bottom:16px}
-  .card{width:min(360px,90vw);background:#fff;border-radius:14px;box-shadow:0 10px 28px rgba(15,23,42,.08);padding:10px}
-  .card h3{margin:0 0 6px;font-size:13px;font-weight:800;text-align:center}
+  .wrap{max-width:880px;margin:10px auto 84px;padding:0 12px}
+  h1{text-align:center;margin:0 0 12px;font-size:22px;font-weight:800}
+  .camWrap{display:flex;justify-content:center;margin-bottom:14px}
+  .card{width:min(340px,90vw);background:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,.08);padding:10px}
+  .card h3{margin:0 0 6px;font-size:13px;font-weight:700;text-align:center}
   .cam{width:100%;aspect-ratio:4/3;background:#000;border-radius:10px;overflow:hidden}
-  video{width:100%;height:100%;display:block;transform:scaleX(-1)} /* espejo solo en UI */
+  video{width:100%;height:100%;display:block;transform:scaleX(-1)}
   canvas{display:none}
   .hint{text-align:center;font-size:12px;color:#666;margin-top:6px}
-
-  /* Cuadrícula 2×2 */
-  .grid{display:grid;gap:var(--gap)}
-  @media (min-width:600px){ .grid{grid-template-columns:1fr 1fr} } /* 2 columnas en tablet/pc siempre */
-
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   .row{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);
-       padding:12px;display:flex;flex-direction:column;align-items:center}
-  .name{font-weight:700;font-size:var(--nameFS);margin-bottom:8px;text-align:center}
-  .btns{display:flex;gap:10px;width:100%;justify-content:center}
-  .btn{position:relative;flex:1;min-width:110px;height:var(--btnH);border-radius:10px;color:#fff;font-weight:800;font-size:var(--btnFS);
-       display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;box-shadow:0 4px 10px rgba(0,0,0,.08)}
-  .btn.in{background:linear-gradient(180deg,var(--green),var(--green2))}
-  .btn.out{background:linear-gradient(180deg,var(--red),var(--red2))}
+       padding:10px;display:flex;flex-direction:column;align-items:center}
+  .name{font-weight:700;font-size:var(--nameFS);margin-bottom:6px;text-align:center}
+  .btns{display:flex;gap:8px;width:100%;justify-content:center}
+  .btn{position:relative;flex:1;min-width:95px;height:var(--btnH);border-radius:10px;color:#fff;font-weight:700;
+       font-size:var(--btnFS);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;
+       box-shadow:0 3px 8px rgba(0,0,0,.08)}
   .btn:active{transform:translateY(1px)}
+  .in{background:linear-gradient(180deg,#168a40,#0f6b35)}
+  .out{background:linear-gradient(180deg,#c43535,#a12626)}
   .btn[aria-busy="true"]::after{
-    content:"Enviando…";
-    position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    border-radius:inherit; background:rgba(0,0,0,.22);
-    color:#fff; font-weight:800; font-size:13px;
+    content:"Enviando…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    border-radius:inherit;background:rgba(0,0,0,.22);color:#fff;font-weight:700;font-size:13px
   }
-
-  /* Barra inferior estado */
-  .bar{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(860px,94vw);
-       background:#fff;border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.18);
-       padding:10px 14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+  .bar{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);
+       width:min(860px,94vw);background:#fff;border-radius:12px;
+       box-shadow:0 12px 28px rgba(0,0,0,.18);
+       padding:10px 14px;display:flex;align-items:center;justify-content:center;
+       font-weight:700;font-size:15px}
   .msg-ok{color:#0f6b35}.msg-err{color:#a21919}.bar[hidden]{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Fichaje Puertas Lloris</h1>
-
   <div class="camWrap">
     <section class="card">
       <h3>Cámara</h3>
-      <div class="cam">
-        <video id="video" playsinline autoplay muted></video>
-        <canvas id="canvas"></canvas>
-      </div>
+      <div class="cam"><video id="video" playsinline autoplay muted></video><canvas id="canvas"></canvas></div>
       <div id="camStatus" class="hint">Inicializando cámara…</div>
     </section>
   </div>
-
   <div id="grid" class="grid"></div>
 </div>
-
 <div id="bar" class="bar" hidden><span id="barMsg" class="msg-ok">Listo</span></div>
 
-<!-- GET por iframe para esquivar CORS, y usar onload como confirmación -->
-<iframe id="hiddenFrame" name="hiddenFrame" style="display:none"></iframe>
-
-<!-- Beep fallback -->
-<audio id="beepAudio" preload="auto">
-  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-</audio>
+<audio id="beepAudio" preload="auto"><source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg"></audio>
 
 <script>
 /*** CONFIG ***/
-const ENDPOINT = "https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
-const WORKERS  = [
-  "Luis Bou Garcia",
-  "Emilio Muñoz Usero",
-  "Emilio Fernandez Muñoz",
-  "Fernando Lloris Sanchez"
-];
-const TARGET_WIDTH = 480;   // captura ligera
-const JPEG_QUALITY = 0.5;
+const ENDPOINT="https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
+const WORKERS=["Luis Bou Garcia","Emilio Muñoz Usero","Emilio Fernandez Muñoz","Fernando Lloris Sanchez"];
+const TARGET_WIDTH=420, JPEG_QUALITY=0.5;
 
 /*** DOM ***/
-const grid = document.getElementById('grid');
-const bar = document.getElementById('bar'), barMsg = document.getElementById('barMsg');
-const video = document.getElementById('video'), canvas = document.getElementById('canvas'), camStatus = document.getElementById('camStatus');
-const hiddenFrame = document.getElementById('hiddenFrame');
-const beepTag = document.getElementById('beepAudio');
+const grid=document.getElementById('grid');
+const bar=document.getElementById('bar'), barMsg=document.getElementById('barMsg');
+const video=document.getElementById('video'), canvas=document.getElementById('canvas'), camStatus=document.getElementById('camStatus');
+const beepTag=document.getElementById('beepAudio');
 
-/*** Audio fiable (contexto persistente) ***/
+/*** Audio ***/
 let AC=null;
-function unlockAudioOnce(){
-  if (AC) return;
-  try{
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    AC = new Ctx();
-    AC.resume && AC.resume();
-    const o=AC.createOscillator(), g=AC.createGain(); g.gain.value=0; o.connect(g); g.connect(AC.destination);
-    o.start(); o.stop(AC.currentTime+0.01);
-  }catch(_){}
-}
-function beepOk(){
-  try{
-    if (!AC){ const Ctx=window.AudioContext||window.webkitAudioContext; AC=new Ctx(); }
-    AC.resume && AC.resume();
-    const o=AC.createOscillator(), g=AC.createGain();
-    o.type='sine'; o.frequency.value=880;
-    g.gain.setValueAtTime(0.06, AC.currentTime);
-    o.connect(g); g.connect(AC.destination);
-    o.start(); o.stop(AC.currentTime+0.12);
-  }catch(_){
-    try{ beepTag.currentTime=0; beepTag.play().catch(()=>{});}catch(__){}
-  }
-}
+function unlockAudioOnce(){ if(AC) return; try{ const Ctx=window.AudioContext||window.webkitAudioContext; AC=new Ctx(); AC.resume&&AC.resume(); const o=AC.createOscillator(),g=AC.createGain(); g.gain.value=0;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+0.01);}catch{} }
+function beepOk(){ try{ if(!AC){const Ctx=window.AudioContext||window.webkitAudioContext;AC=new Ctx();} AC.resume&&AC.resume(); const o=AC.createOscillator(),g=AC.createGain(); o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(0.06,AC.currentTime);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+0.12);}catch{ try{beepTag.currentTime=0;beepTag.play().catch(()=>{});}catch{} } }
 
 /*** Cámara ***/
 let camReady=false;
-(async function initCam(){
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
-    video.srcObject=stream;
-    video.addEventListener('loadeddata', ()=>{ camReady=true; camStatus.textContent='Cámara lista'; }, {once:true});
-    await video.play().catch(()=>{});
-  }catch(e){
-    camReady=false; camStatus.textContent='Sin acceso a cámara (se enviará sin foto)';
-  }
-})();
-function captureDataURL(){
-  if(!camReady || !video.videoWidth) return '';
-  const vw=video.videoWidth, vh=video.videoHeight, scale=TARGET_WIDTH/vw;
-  const tw=Math.round(vw*scale), th=Math.round(vh*scale);
-  canvas.width=tw; canvas.height=th;
-  const ctx=canvas.getContext('2d');
-  ctx.drawImage(video,0,0,tw,th); // NO espejada en captura
-  return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
-}
+(async()=>{ try{ const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); video.srcObject=stream; video.addEventListener('loadeddata',()=>{camReady=true;camStatus.textContent='Cámara lista';},{once:true}); await video.play().catch(()=>{});}catch{ camStatus.textContent='Sin acceso a cámara'; }})();
+function captureDataURL(){ if(!camReady||!video.videoWidth) return ''; const vw=video.videoWidth,vh=video.videoHeight,scale=TARGET_WIDTH/vw; const tw=Math.round(vw*scale),th=Math.round(vh*scale); canvas.width=tw;canvas.height=th; canvas.getContext('2d').drawImage(video,0,0,tw,th); return canvas.toDataURL('image/jpeg',JPEG_QUALITY); }
 
-/*** Util ***/
-function setBar(msg, ok=true){ barMsg.textContent=msg; barMsg.className=ok?'msg-ok':'msg-err'; bar.hidden=false; }
-function beacon(url, payloadObj){
-  try{
-    const blob=new Blob([JSON.stringify(payloadObj)], {type:'text/plain;charset=UTF-8'});
-    navigator.sendBeacon(url, blob);
-  }catch(_){}
-}
+/*** Utils ***/
+function setBar(msg,ok=true){ barMsg.textContent=msg; barMsg.className=ok?'msg-ok':'msg-err'; bar.hidden=false; }
+function beacon(url,obj){ try{ const blob=new Blob([JSON.stringify(obj)],{type:'text/plain;charset=UTF-8'}); navigator.sendBeacon(url,blob);}catch{} }
+function jsonp(url,cb){ const id='cb_'+Math.random().toString(36).slice(2); window[id]=d=>{ try{cb(d);}finally{ delete window[id]; s.remove(); } }; const s=document.createElement('script'); s.src=url+(url.includes('?')?'&':'?')+'callback='+id; s.onerror=()=>{ try{cb({ok:false});}finally{ delete window[id]; s.remove(); } }; document.head.appendChild(s); }
 
-/*** Fichaje (iframe + beacons) ***/
-function ficha(nombre, tipo, btn){
+/*** Fichaje ***/
+function ficha(nombre,tipo,btn){
   unlockAudioOnce();
-
-  // Estado UI
   btn.setAttribute('aria-busy','true');
   setBar(`Enviando — ${nombre} · ${tipo.toUpperCase()}`, true);
 
-  // Foto inmediata en paralelo
-  const durl = captureDataURL();
-  if (durl) beacon(ENDPOINT, { photo: durl, nombre, tipo });
+  const durl=captureDataURL();
+  if(durl) beacon(ENDPOINT,{photo:durl,nombre,tipo});
 
-  // Alta por GET (confirmación en onload)
-  const url = ENDPOINT + "?nombre=" + encodeURIComponent(nombre) + "&tipo=" + encodeURIComponent(tipo) + "&t=" + Date.now();
-  const onDone = () => {
+  const url=`${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}`;
+  jsonp(url, r=>{
     btn.removeAttribute('aria-busy');
+    if(!r||!r.ok){ setBar(`${nombre} — error`,false); return; }
     beepOk();
-    const stamp = new Date().toLocaleTimeString("es-ES",{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    setBar(`OK ${nombre} — ${tipo.toUpperCase()} ${stamp}`, true);
-    if (durl) setTimeout(()=>beacon(ENDPOINT, { photo: durl, nombre, tipo }), 350); // reintento para acople seguro
-    hiddenFrame.removeEventListener('load', onDone);
-  };
-  hiddenFrame.addEventListener('load', onDone);
-  hiddenFrame.src = url;
+    setBar(`OK ${nombre} — ${tipo.toUpperCase()} ${r.hora}`, true);
+    if(durl) beacon(ENDPOINT,{token:r.token||'',photo:durl,nombre,tipo});
+  });
 }
 
 /*** Render 2×2 ***/
 WORKERS.forEach(nombre=>{
-  const row = document.createElement('div'); row.className='row';
-  const name = document.createElement('div'); name.className='name'; name.textContent=nombre;
-  const btns = document.createElement('div'); btns.className='btns';
-  const bIn  = document.createElement('div'); bIn.className='btn in';  bIn.textContent='Entrada';
-  const bOut = document.createElement('div'); bOut.className='btn out'; bOut.textContent='Salida';
+  const row=document.createElement('div'); row.className='row';
+  const name=document.createElement('div'); name.className='name'; name.textContent=nombre;
+  const btns=document.createElement('div'); btns.className='btns';
+  const bIn=document.createElement('div'); bIn.className='btn in'; bIn.textContent='Entrada';
+  const bOut=document.createElement('div'); bOut.className='btn out'; bOut.textContent='Salida';
+  bIn.onclick=()=>ficha(nombre,'entrada',bIn);
+  bOut.onclick=()=>ficha(nombre,'salida',bOut);
   btns.appendChild(bIn); btns.appendChild(bOut);
   row.appendChild(name); row.appendChild(btns);
   grid.appendChild(row);
-
-  bIn.addEventListener('click', ()=>ficha(nombre,'entrada',bIn));
-  bOut.addEventListener('click',()=>ficha(nombre,'salida', bOut));
 });
 </script>
 </body>
