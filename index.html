@@ -9,46 +9,38 @@
 <title>Fichaje Puertas Lloris</title>
 <style>
   :root{
-    --gap:12px; --maxw:980px;
-    --btnH:44px; --btnFS:16px; --nameFS:15px;
+    --gap:14px; --maxw:900px;
+    --btnH:48px; --btnFS:17px; --nameFS:16px;
     --green:#168a40; --green2:#0f6b35; --red:#c43535; --red2:#a12626;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,Arial,sans-serif;background:#edf1f5;color:#0f172a}
-  .wrap{max-width:var(--maxw);margin:10px auto 84px;padding:0 10px}
-  h1{margin:0 0 8px;font-size:22px;font-weight:800;text-align:center}
+  .wrap{max-width:var(--maxw);margin:10px auto 84px;padding:0 12px}
+  h1{text-align:center;margin:0 0 10px;font-size:22px;font-weight:800}
 
   /* Cámara arriba, centrada */
-  .camWrap{display:flex;justify-content:center;margin:4px 0 10px}
-  .card{width:min(420px,92vw);background:#fff;border-radius:14px;box-shadow:0 10px 28px rgba(15,23,42,.08);padding:10px}
+  .camWrap{display:flex;justify-content:center;margin-bottom:16px}
+  .card{width:min(360px,90vw);background:#fff;border-radius:14px;box-shadow:0 10px 28px rgba(15,23,42,.08);padding:10px}
   .card h3{margin:0 0 6px;font-size:13px;font-weight:800;text-align:center}
   .cam{width:100%;aspect-ratio:4/3;background:#000;border-radius:10px;overflow:hidden}
-  video{width:100%;height:100%;display:block;transform:scaleX(-1)} /* espejo UI */
-  canvas{width:100%;height:100%;display:block}
-  .hint{margin-top:6px;font-size:12px;color:#666;text-align:center}
+  video{width:100%;height:100%;display:block;transform:scaleX(-1)} /* espejo solo UI */
+  canvas{display:none}
+  .hint{text-align:center;font-size:12px;color:#666;margin-top:6px}
 
-  /* Lista nombres + dos botones pequeños */
-  .grid{display:grid;grid-template-columns:1fr;gap:8px}
+  /* Cuadrícula de trabajadores */
+  .grid{display:grid;gap:var(--gap)}
   @media (min-width:600px){ .grid{grid-template-columns:1fr 1fr} }
-  @media (min-width:900px){ .grid{grid-template-columns:1fr 1fr 1fr} }
 
-  .row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:#fff;border-radius:12px;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-  .name{font-weight:700;font-size:var(--nameFS);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:4px}
-  .btn{
-    min-width:90px;height:var(--btnH);border-radius:10px;color:#fff;font-weight:800;font-size:var(--btnFS);
-    display:flex;align-items:center;justify-content:center;padding:0 10px;cursor:pointer;user-select:none;
-    box-shadow:0 4px 10px rgba(0,0,0,.08), inset 0 -2px 0 rgba(0,0,0,.08);position:relative;
-    transition:transform .06s ease, filter .12s ease;
-  }
-  .btn:active{transform:translateY(1px);filter:brightness(.98)}
-  .btn.in {background:linear-gradient(180deg,var(--green),var(--green2))}
+  .row{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);
+       padding:12px;display:flex;flex-direction:column;align-items:center}
+  .name{font-weight:700;font-size:var(--nameFS);margin-bottom:8px;text-align:center}
+  .btns{display:flex;gap:10px;width:100%;justify-content:center}
+  .btn{flex:1;min-width:110px;height:var(--btnH);border-radius:10px;color:#fff;font-weight:800;font-size:var(--btnFS);
+       display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;box-shadow:0 4px 10px rgba(0,0,0,.08)}
+  .btn.in{background:linear-gradient(180deg,var(--green),var(--green2))}
   .btn.out{background:linear-gradient(180deg,var(--red),var(--red2))}
-  .btn[aria-busy="true"]::after{
-    content:"Enviando…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,.22);border-radius:inherit;font-weight:800;color:#fff;font-size:14px
-  }
-  .okflash{box-shadow:0 0 0 3px rgba(16,185,129,.55) inset, 0 4px 10px rgba(0,0,0,.08)}
-  .errflash{box-shadow:0 0 0 3px rgba(239,68,68,.65) inset, 0 4px 10px rgba(0,0,0,.08)}
+  .btn:active{transform:translateY(1px)}
+  .btn[aria-busy="true"]{filter:grayscale(.2) brightness(.95)}
 
   /* Barra inferior de estado */
   .bar{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(860px,94vw);
@@ -66,7 +58,7 @@
       <h3>Cámara</h3>
       <div class="cam">
         <video id="video" playsinline autoplay muted></video>
-        <canvas id="canvas" hidden></canvas>
+        <canvas id="canvas"></canvas>
       </div>
       <div id="camStatus" class="hint">Inicializando cámara…</div>
     </section>
@@ -77,10 +69,10 @@
 
 <div id="bar" class="bar" hidden><span id="barMsg" class="msg-ok">Listo</span></div>
 
-<!-- GET se lanza por iframe para no depender de CORS -->
+<!-- GET por iframe para evitar CORS -->
 <iframe id="hiddenFrame" name="hiddenFrame" style="display:none"></iframe>
 
-<!-- Beep corto (fallback); además hay beep por WebAudio -->
+<!-- Beep fallback -->
 <audio id="beepAudio" preload="auto">
   <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
 </audio>
@@ -94,8 +86,7 @@ const WORKERS  = [
   "Emilio Fernandez Muñoz",
   "Fernando Lloris Sanchez"
 ];
-// Foto rápida y ligera
-const TARGET_WIDTH = 480;
+const TARGET_WIDTH = 480;   // más ligero
 const JPEG_QUALITY = 0.5;
 
 /*** DOM ***/
@@ -105,7 +96,7 @@ const video = document.getElementById('video'), canvas = document.getElementById
 const hiddenFrame = document.getElementById('hiddenFrame');
 const beepTag = document.getElementById('beepAudio');
 
-/*** Audio: WebAudio + fallback <audio> ***/
+/*** Audio ***/
 let audioUnlocked=false;
 function unlockAudioOnce(){
   if(audioUnlocked) return;
@@ -141,8 +132,8 @@ function captureDataURL(){
   const vw=video.videoWidth, vh=video.videoHeight, scale=TARGET_WIDTH/vw;
   const tw=Math.round(vw*scale), th=Math.round(vh*scale);
   canvas.width=tw; canvas.height=th;
-  // Captura NO espejada (en la hoja se ve normal)
-  canvas.getContext('2d').drawImage(video,0,0,tw,th);
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(video,0,0,tw,th); // captura NO espejada
   return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 }
 
@@ -152,7 +143,6 @@ function el(tag,attrs={},txt=''){ const n=document.createElement(tag);
   if(txt) n.textContent=txt; return n;
 }
 function setBar(msg, ok=true){ barMsg.textContent=msg; barMsg.className=ok?'msg-ok':'msg-err'; bar.hidden=false; }
-function flash(n,ok=true){ n.classList.remove('okflash','errflash'); n.classList.add(ok?'okflash':'errflash'); setTimeout(()=>n.classList.remove('okflash','errflash'),900); }
 function beacon(url, payloadObj){
   try{
     const blob=new Blob([JSON.stringify(payloadObj)], {type:'text/plain;charset=UTF-8'});
@@ -163,39 +153,38 @@ function beacon(url, payloadObj){
 /*** Fichaje ***/
 function ficha(nombre, tipo, btn){
   unlockAudioOnce();
-
-  // Botón: “enviando…”
   btn.setAttribute('aria-busy','true');
 
-  // 1) Foto INMEDIATA en paralelo (puede llegar antes que el GET; el backend la casará por memoria si ya está)
+  // 1) Foto inmediata en paralelo
   const durl = captureDataURL();
   if (durl) beacon(ENDPOINT, { photo: durl, nombre, tipo });
 
-  // 2) Lanza GET por iframe (esto registra en “Entradas”)
+  // 2) Alta por GET (iframe)
   const url = ENDPOINT + "?nombre=" + encodeURIComponent(nombre) + "&tipo=" + encodeURIComponent(tipo) + "&t=" + Date.now();
-  // onload nos sirve de “confirmación” para OK + beep + reintento de foto
   const onDone = () => {
     btn.removeAttribute('aria-busy');
-    flash(btn, true);
     beepOk();
     const stamp = new Date().toLocaleTimeString("es-ES",{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     setBar(`OK ${nombre} — ${tipo.toUpperCase()} ${stamp}`, true);
 
-    // 3) Reenvía foto con pequeño retardo para asegurar acople (si la primera llegó demasiado pronto)
-    if (durl) setTimeout(()=>beacon(ENDPOINT, { photo: durl, nombre, tipo }), 400);
+    // 3) Reenvío con pequeño retardo → asegura acople
+    if (durl) setTimeout(()=>beacon(ENDPOINT, { photo: durl, nombre, tipo }), 350);
+
     hiddenFrame.removeEventListener('load', onDone);
   };
   hiddenFrame.addEventListener('load', onDone);
   hiddenFrame.src = url;
 }
 
-/*** Render ***/
+/*** Render (2×2 en tablet) ***/
 WORKERS.forEach(nombre=>{
   const row = el('div',{class:'row'});
   const name = el('div',{class:'name'}, nombre);
+  const btns = el('div',{class:'btns'});
   const bIn  = el('div',{class:'btn in',  role:'button', tabindex:'0'}, 'Entrada');
   const bOut = el('div',{class:'btn out', role:'button', tabindex:'0'}, 'Salida');
-  row.appendChild(name); row.appendChild(bIn); row.appendChild(bOut);
+  btns.appendChild(bIn); btns.appendChild(bOut);
+  row.appendChild(name); row.appendChild(btns);
   grid.appendChild(row);
 
   bIn.addEventListener('click', ()=>ficha(nombre,'entrada',bIn));
