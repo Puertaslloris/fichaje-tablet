@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
@@ -59,6 +59,13 @@
 <!-- GET por iframe para el fichaje (sin CORS/JSONP) -->
 <iframe id="hiddenFrame" name="hiddenFrame" style="display:none"></iframe>
 
+<!-- Fallback POST por formulario (sin CORS) -->
+<form id="photoForm" target="hiddenFrame" action="" method="POST" style="display:none">
+  <input type="hidden" name="photo" />
+  <input type="hidden" name="nombre" />
+  <input type="hidden" name="tipo" />
+</form>
+
 <!-- Beep fallback -->
 <audio id="beepAudio" preload="auto">
   <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
@@ -76,6 +83,7 @@ const bar=document.getElementById('bar'), barMsg=document.getElementById('barMsg
 const video=document.getElementById('video'), canvas=document.getElementById('canvas'), camStatus=document.getElementById('camStatus');
 const hiddenFrame=document.getElementById('hiddenFrame');
 const beepTag=document.getElementById('beepAudio');
+const photoForm=document.getElementById('photoForm'); photoForm.action=ENDPOINT;
 
 /*** Audio persistente ***/
 let AC=null;
@@ -84,28 +92,64 @@ function beepOk(){ try{ if(!AC){const Ctx=window.AudioContext||window.webkitAudi
 
 /*** Cámara ***/
 let camReady=false;
-(async()=>{ try{ const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false}); video.srcObject=stream; video.addEventListener('loadeddata',()=>{camReady=true;camStatus.textContent='Cámara lista';},{once:true}); await video.play().catch(()=>{});}catch{ camStatus.textContent='Sin acceso a cámara'; }})();
-function captureDataURL(){ if(!camReady||!video.videoWidth) return ''; const vw=video.videoWidth,vh=video.videoHeight,scale=TARGET_WIDTH/vw; const tw=Math.round(vw*scale),th=Math.round(vh*scale); canvas.width=tw;canvas.height=th; canvas.getContext('2d').drawImage(video,0,0,tw,th); return canvas.toDataURL('image/jpeg',JPEG_QUALITY); }
+async function startCamera(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    video.srcObject=stream;
+    video.addEventListener('loadeddata',()=>{camReady=true;camStatus.textContent='Cámara lista';},{once:true});
+    await video.play().catch(()=>{});
+  }catch(e){
+    camStatus.textContent='Sin acceso a cámara';
+  }
+}
+startCamera();
+
+// Reintento al volver de suspensión / volver a la app (Fully)
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && (!camReady || !video.srcObject)) startCamera(); });
+window.addEventListener('focus',()=>{ if(!camReady || !video.srcObject) startCamera(); });
+
+function captureDataURL(){
+  if(!camReady||!video.videoWidth) return '';
+  const vw=video.videoWidth,vh=video.videoHeight,scale=TARGET_WIDTH/vw;
+  const tw=Math.round(vw*scale),th=Math.round(vh*scale);
+  canvas.width=tw;canvas.height=th;
+  canvas.getContext('2d').drawImage(video,0,0,tw,th);
+  return canvas.toDataURL('image/jpeg',JPEG_QUALITY);
+}
 
 /*** Utils ***/
 function setBar(msg,ok=true){ barMsg.textContent=msg; barMsg.className=ok?'msg-ok':'msg-err'; bar.hidden=false; }
-function beacon(url,obj){ try{ const blob=new Blob([JSON.stringify(obj)],{type:'text/plain;charset=UTF-8'}); navigator.sendBeacon(url,blob);}catch{} }
 
-/*** Fichaje: iframe GET + foto por beacon + beep inmediato ***/
+/*** Foto: beacon -> fallback POST por form (sin CORS) ***/
+function sendPhoto(durl,nombre,tipo){
+  let done=false;
+  try{
+    if(navigator.sendBeacon){
+      const blob=new Blob([JSON.stringify({photo:durl,nombre,tipo})],{type:'text/plain;charset=UTF-8'});
+      done = navigator.sendBeacon(ENDPOINT, blob);
+    }
+  }catch{}
+
+  if(!done){
+    // POST por formulario al iframe (aceptado por GAS sin CORS)
+    photoForm.elements.photo.value=durl;
+    photoForm.elements.nombre.value=nombre;
+    photoForm.elements.tipo.value=tipo;
+    photoForm.submit();
+  }
+}
+
+/*** Fichaje: iframe GET + foto ***/
 function ficha(nombre,tipo,btn){
   unlockAudioOnce();
-
   btn.setAttribute('aria-busy','true');
   setBar(`Enviando — ${nombre} · ${tipo.toUpperCase()}`, true);
 
-  // Foto inmediata (no bloquea). El backend debe emparejar por última fila del mismo nombre/tipo.
   const durl=captureDataURL();
-  if(durl) beacon(ENDPOINT,{photo:durl,nombre,tipo});
+  if(durl) sendPhoto(durl,nombre,tipo);
 
-  // Alta de fichaje por GET (muy ligero, sin CORS ni JSONP)
   hiddenFrame.src = `${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}&t=${Date.now()}`;
 
-  // Beep + OK optimista (no esperamos respuesta para evitar “bloqueos”)
   beepOk();
   setBar(`OK ${nombre} — ${tipo.toUpperCase()} (enviado)`, true);
   btn.removeAttribute('aria-busy');
