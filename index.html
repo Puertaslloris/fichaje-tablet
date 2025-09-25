@@ -10,19 +10,20 @@
   html,body{height:100%}
   body{margin:0;font-family:system-ui,Arial,sans-serif;background:#edf1f5;color:#0f172a}
 
-  /* Usar todo el alto y evitar empuje hacia abajo */
+  /* Contenedor compacto */
   .wrap{max-width:880px;margin:4px auto 4px;padding:0 8px}
   h1{margin:4px 0 6px;text-align:center;font-size:18px;font-weight:800}
 
-  /* Barra de estado ARRIBA para liberar espacio inferior */
+  /* Barra de estado ARRIBA */
   .bar{position:fixed;left:50%;top:6px;transform:translateX(-50%);
        width:min(860px,94vw);background:#fff;border-radius:10px;
        box-shadow:0 8px 20px rgba(0,0,0,.15);
        padding:6px 10px;display:flex;align-items:center;justify-content:center;
        font-weight:700;font-size:14px;z-index:20}
   .msg-ok{color:#0f6b35}.msg-err{color:#a21919}.bar[hidden]{display:none}
+  .spacer{height:38px}
 
-  /* Cámara más pequeña y compacta */
+  /* Cámara compacta */
   .camWrap{display:flex;justify-content:center;margin:2px 0 8px}
   .card{width:min(300px,90vw);background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,.08);padding:8px}
   .card h3{margin:0 0 4px;font-size:12px;font-weight:700;text-align:center}
@@ -31,11 +32,8 @@
   canvas{display:none}
   .hint{text-align:center;font-size:11px;color:#666;margin-top:4px}
 
-  /* Grid más denso y arriba */
+  /* Grid compacto 2×2 */
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  /* Si prefieres 1 columna para que no quede nada abajo, descomenta: */
-  /* .grid{grid-template-columns:1fr} */
-
   .row{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);
        padding:8px;display:flex;flex-direction:column;align-items:center}
   .name{font-weight:700;font-size:var(--nameFS);margin-bottom:6px;text-align:center}
@@ -50,9 +48,6 @@
     content:"Enviando…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     border-radius:inherit;background:rgba(0,0,0,.22);color:#fff;font-weight:700;font-size:12px
   }
-
-  /* Reservar altura para la barra superior (sin empujar contenido hacia abajo) */
-  .spacer{height:38px}
 </style>
 </head>
 <body>
@@ -120,7 +115,19 @@ function captureDataURL(){
 
 /*** Utils ***/
 function setBar(msg,ok=true){ barMsg.textContent=msg; barMsg.className=ok?'msg-ok':'msg-err'; bar.hidden=false; }
-function beacon(url,obj){ try{ const blob=new Blob([JSON.stringify(obj)],{type:'text/plain;charset=UTF-8'}); navigator.sendBeacon(url,blob);}catch{} }
+
+/*** POST foto con fetch(keepalive) ***/
+async function postFoto(nombre, tipo, durl){
+  if(!durl) return;
+  try{
+    await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      keepalive: true,
+      body: JSON.stringify({ nombre, tipo, photo: durl })
+    });
+  }catch(_){}
+}
 
 /*** Fichaje ***/
 function ficha(nombre,tipo,btn){
@@ -128,11 +135,11 @@ function ficha(nombre,tipo,btn){
   btn.setAttribute('aria-busy','true');
   setBar(`Enviando — ${nombre} · ${tipo.toUpperCase()}`, true);
 
-  // Foto inmediata (no bloquea)
+  // Foto inmediata por POST (sin sendBeacon)
   const durl=captureDataURL();
-  if(durl) beacon(ENDPOINT,{photo:durl,nombre,tipo});
+  postFoto(nombre, tipo, durl);
 
-  // Alta de fichaje por GET
+  // Alta de fichaje por GET (rápido, sin CORS/JSONP)
   hiddenFrame.src = `${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}&t=${Date.now()}`;
 
   // OK optimista
