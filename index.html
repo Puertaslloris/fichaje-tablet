@@ -2,61 +2,107 @@
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Fichaje Puertas Lloris</title>
 <style>
-  body{margin:0;font-family:system-ui,Arial;background:#edf1f5;color:#0f172a}
-  .bar{position:fixed;top:6px;left:50%;transform:translateX(-50%);
-       background:#fff;padding:6px 12px;border-radius:8px;
-       box-shadow:0 4px 12px rgba(0,0,0,.15);font-weight:600;z-index:20}
-  .msg-ok{color:#0f6b35}.msg-err{color:#a21919}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:70px auto;max-width:600px}
-  .row{background:#fff;padding:8px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.1);text-align:center}
-  .btn{padding:10px;border-radius:6px;color:#fff;font-weight:700;cursor:pointer;margin:4px}
+  :root{--gap:10px;--btnH:40px;--btnFS:14px;--nameFS:14px}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,Arial,sans-serif;background:#edf1f5;color:#0f172a}
+
+  /* Contenedor compacto */
+  .wrap{max-width:880px;margin:4px auto 4px;padding:0 8px}
+  h1{margin:4px 0 6px;text-align:center;font-size:18px;font-weight:800}
+
+  /* Barra de estado ARRIBA */
+  .bar{position:fixed;left:50%;top:6px;transform:translateX(-50%);
+       width:min(860px,94vw);background:#fff;border-radius:10px;
+       box-shadow:0 8px 20px rgba(0,0,0,.15);
+       padding:6px 10px;display:flex;align-items:center;justify-content:center;
+       font-weight:700;font-size:14px;z-index:20}
+  .msg-ok{color:#0f6b35}.msg-err{color:#a21919}.bar[hidden]{display:none}
+  .spacer{height:38px}
+
+  /* Cámara compacta */
+  .camWrap{display:flex;justify-content:center;margin:2px 0 8px}
+  .card{width:min(300px,90vw);background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,.08);padding:8px}
+  .card h3{margin:0 0 4px;font-size:12px;font-weight:700;text-align:center}
+  .cam{width:100%;aspect-ratio:4/3;background:#000;border-radius:8px;overflow:hidden}
+  video{width:100%;height:100%;display:block;transform:scaleX(-1)} /* espejo como antes */
+  canvas{display:none}
+  .hint{text-align:center;font-size:11px;color:#666;margin-top:4px}
+
+  /* Grid 2×2 */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);
+       padding:8px;display:flex;flex-direction:column;align-items:center}
+  .name{font-weight:700;font-size:var(--nameFS);margin-bottom:6px;text-align:center}
+  .btns{display:flex;gap:8px;width:100%;justify-content:center}
+  .btn{position:relative;flex:1;min-width:90px;height:var(--btnH);border-radius:10px;color:#fff;font-weight:700;
+       font-size:var(--btnFS);display:flex;align-items:center;justify-content:center;user-select:none;cursor:pointer;
+       box-shadow:0 3px 8px rgba(0,0,0,.08)}
+  .btn:active{transform:translateY(1px)}
   .in{background:linear-gradient(180deg,#168a40,#0f6b35)}
   .out{background:linear-gradient(180deg,#c43535,#a12626)}
-  .btn[aria-busy="true"]{opacity:0.6;pointer-events:none}
-  video{width:100%;border-radius:8px;background:#000}
-  canvas{display:none}
+  .btn[aria-busy="true"]::after{
+    content:"Enviando…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    border-radius:inherit;background:rgba(0,0,0,.22);color:#fff;font-weight:700;font-size:12px
+  }
 </style>
 </head>
 <body>
-<div id="bar" class="bar" hidden><span id="barMsg"></span></div>
+<div id="bar" class="bar" hidden><span id="barMsg" class="msg-ok">Listo</span></div>
+<div class="spacer" aria-hidden="true"></div>
 
-<div style="max-width:360px;margin:0 auto">
-  <h3 style="text-align:center">Cámara</h3>
-  <video id="video" autoplay playsinline muted></video>
-  <canvas id="canvas"></canvas>
-  <div id="camStatus" style="font-size:12px;text-align:center;color:#555">Inicializando cámara…</div>
+<div class="wrap">
+  <h1>Fichaje Puertas Lloris</h1>
+
+  <div class="camWrap">
+    <section class="card">
+      <h3>Cámara</h3>
+      <div class="cam"><video id="video" playsinline autoplay muted></video><canvas id="canvas"></canvas></div>
+      <div id="camStatus" class="hint">Inicializando cámara…</div>
+    </section>
+  </div>
+
+  <div id="grid" class="grid"></div>
 </div>
 
-<div class="grid" id="grid"></div>
+<!-- GET por iframe para confirmar alta -->
+<iframe id="hiddenFrame" name="hiddenFrame" style="display:none"></iframe>
 
+<!-- Beep -->
 <audio id="beepAudio" preload="auto">
   <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
 </audio>
 
 <script>
 /*** CONFIG ***/
-const ENDPOINT="https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec"; 
+const ENDPOINT="https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
 const WORKERS=["Luis Bou Garcia","Emilio Muñoz Usero","Emilio Fernandez Muñoz","Fernando Lloris Sanchez"];
 const TARGET_WIDTH=360, JPEG_QUALITY=0.5;
+const IFRAME_TIMEOUT_MS=12000;
 
 /*** DOM ***/
 const grid=document.getElementById('grid');
 const bar=document.getElementById('bar'), barMsg=document.getElementById('barMsg');
 const video=document.getElementById('video'), canvas=document.getElementById('canvas'), camStatus=document.getElementById('camStatus');
+const hiddenFrame=document.getElementById('hiddenFrame');
 const beepTag=document.getElementById('beepAudio');
+
+/*** Audio ***/
+let AC=null;
+function unlockAudioOnce(){ if(AC) return; try{ const C=window.AudioContext||window.webkitAudioContext; AC=new C(); AC.resume&&AC.resume(); const o=AC.createOscillator(),g=AC.createGain(); g.gain.value=0;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+0.01);}catch{} }
+function beepOk(){ try{ if(!AC){const C=window.AudioContext||window.webkitAudioContext;AC=new C();} AC.resume&&AC.resume(); const o=AC.createOscillator(),g=AC.createGain(); o.type='sine';o.frequency.value=880; g.gain.setValueAtTime(0.06,AC.currentTime); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+0.12);}catch{ try{beepTag.currentTime=0;beepTag.play().catch(()=>{});}catch{} } }
 
 /*** Cámara ***/
 let camReady=false;
-(async()=>{
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
-    video.srcObject=stream;
-    video.addEventListener('loadeddata',()=>{camReady=true;camStatus.textContent='Cámara lista';},{once:true});
-  }catch{ camStatus.textContent='Sin acceso a cámara'; }
-})();
+(async()=>{ try{
+  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+  video.srcObject=stream;
+  video.addEventListener('loadeddata',()=>{camReady=true;camStatus.textContent='Cámara lista';},{once:true});
+  await video.play().catch(()=>{});
+}catch{ camStatus.textContent='Sin acceso a cámara'; }})();
 function captureDataURL(){
   if(!camReady||!video.videoWidth) return '';
   const vw=video.videoWidth,vh=video.videoHeight,scale=TARGET_WIDTH/vw;
@@ -67,48 +113,69 @@ function captureDataURL(){
 }
 
 /*** Utils ***/
-function setBar(msg,ok=true){barMsg.textContent=msg;barMsg.className=ok?'msg-ok':'msg-err';bar.hidden=false;}
-function beepOk(){try{beepTag.currentTime=0;beepTag.play();}catch{}}
+function setBar(msg,ok=true){ barMsg.textContent=msg; barMsg.className=ok?'msg-ok':'msg-err'; bar.hidden=false; }
+function nowHHMMSS(){ return new Date().toLocaleTimeString('es-ES',{hour12:false}); }
+function awaitIframeLoad(url, timeoutMs){
+  return new Promise((resolve,reject)=>{
+    let done=false;
+    const timer=setTimeout(()=>{ if(done) return; done=true; cleanup(); reject(new Error('timeout')); }, timeoutMs);
+    function onLoad(){ if(done) return; done=true; cleanup(); resolve(); }
+    function cleanup(){ hiddenFrame.removeEventListener('load', onLoad); clearTimeout(timer); }
+    hiddenFrame.addEventListener('load', onLoad, {once:true});
+    hiddenFrame.src=url;
+  });
+}
 
-/*** Fichaje ***/
-async function ficha(nombre,tipo,btn){
-  btn.setAttribute('aria-busy','true');
-  setBar(`Enviando — ${nombre} · ${tipo.toUpperCase()}`,true);
-
-  const durl=captureDataURL();
+/*** POST foto ***/
+async function postFoto(nombre,tipo,durl){
+  if(!durl) return {ok:false,error:'sin-foto'};
   try{
-    const res=await fetch(ENDPOINT,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({nombre,tipo,photo:durl})
-    });
-    const data=await res.json();
-    if(data.ok){
-      setTimeout(()=>{
-        const hora=new Date().toLocaleTimeString('es-ES',{hour12:false});
-        beepOk();
-        setBar(`OK ${nombre} — ${tipo.toUpperCase()} ${hora}`,true);
-        btn.removeAttribute('aria-busy');
-      },2000);
+    const res=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre,tipo,photo:durl})});
+    return await res.json();
+  }catch(e){ return {ok:false,error:'fetch-fallo'}; }
+}
+
+/*** Fichaje controlado (igual UI anterior) ***/
+async function ficha(nombre,tipo,btn){
+  unlockAudioOnce();
+  btn.setAttribute('aria-busy','true');
+  setBar(`Enviando — ${nombre} · ${tipo.toUpperCase()}`, true);
+
+  // 1) Alta por GET + confirmación (iframe.load)
+  const url=`${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}&t=${Date.now()}`;
+  try{
+    await awaitIframeLoad(url, IFRAME_TIMEOUT_MS);
+
+    // 2) Foto tras confirmar alta
+    const durl=captureDataURL();
+    const r=await postFoto(nombre,tipo,durl);
+
+    // 3) Beep + OK si doPost responde ok
+    if(r && r.ok){
+      await new Promise(r=>setTimeout(r,2000));
+      beepOk();
+      setBar(`OK — ${nombre} · ${tipo.toUpperCase()} · ${nowHHMMSS()} (enviado)`, true);
     }else{
-      setBar(`Error foto — ${nombre}`,false);
-      btn.removeAttribute('aria-busy');
+      setBar(`ERROR foto — ${nombre} · ${tipo.toUpperCase()} (${r && r.error ? r.error : 'desconocido'})`, false);
     }
-  }catch(err){
-    setBar(`Error conexión — ${nombre}`,false);
+  }catch(_){
+    setBar(`ERROR — ${nombre} · ${tipo.toUpperCase()}: sin confirmación`, false);
+  }finally{
     btn.removeAttribute('aria-busy');
   }
 }
 
-/*** Render grid ***/
-WORKERS.forEach(n=>{
+/*** Render 2×2 ***/
+WORKERS.forEach(nombre=>{
   const row=document.createElement('div'); row.className='row';
-  const name=document.createElement('div'); name.textContent=n;
+  const name=document.createElement('div'); name.className='name'; name.textContent=nombre;
+  const btns=document.createElement('div'); btns.className='btns';
   const bIn=document.createElement('div'); bIn.className='btn in'; bIn.textContent='Entrada';
   const bOut=document.createElement('div'); bOut.className='btn out'; bOut.textContent='Salida';
-  bIn.onclick=()=>ficha(n,'entrada',bIn);
-  bOut.onclick=()=>ficha(n,'salida',bOut);
-  row.appendChild(name); row.appendChild(bIn); row.appendChild(bOut);
+  bIn.onclick=()=>ficha(nombre,'entrada',bIn);
+  bOut.onclick=()=>ficha(nombre,'salida',bOut);
+  btns.appendChild(bIn); btns.appendChild(bOut);
+  row.appendChild(name); row.appendChild(btns);
   grid.appendChild(row);
 });
 </script>
