@@ -55,10 +55,14 @@
     <h3>Firma</h3>
     <canvas id="sig"></canvas>
 
-    <!-- Aviso RGPD ultrabreve con enlace al PDF -->
-    <p style="font-size:12px;margin:8px 0;text-align:center">
-      Al fichar aceptas el tratamiento de tus datos según la política de privacidad
-      <a href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing" target="_blank" rel="noopener">Ver</a>.
+    <!-- Aviso RGPD mejorado -->
+    <p role="note" style="font-size:13px;line-height:1.35;margin:10px 0 6px;text-align:center;white-space:nowrap">
+      Al fichar aceptas el tratamiento de tus datos según la
+      <a href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing"
+         target="_blank" rel="noopener"
+         style="font-weight:600;text-decoration:underline;color:#0b57d0">
+         Política de Privacidad
+      </a>.
     </p>
 
     <div class="actions">
@@ -66,6 +70,15 @@
       <button class="b send"  id="btnEnviar">Enviar</button>
     </div>
   </section>
+
+  <!-- Pie accesible fijo (opcional) -->
+  <div style="position:sticky;bottom:8px;text-align:center">
+    <a href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing"
+       target="_blank" rel="noopener"
+       style="display:inline-block;padding:6px 10px;border-radius:8px;background:#eef3ff;color:#0b57d0;font-weight:700;text-decoration:none">
+       Ver Política de Privacidad
+    </a>
+  </div>
 </div>
 
 <iframe id="hiddenFrame" name="hiddenFrame" style="display:none"></iframe>
