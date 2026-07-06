@@ -55,7 +55,6 @@
     <h3>Firma</h3>
     <canvas id="sig"></canvas>
 
-    <!-- Aviso RGPD mejorado -->
     <p role="note" style="font-size:13px;line-height:1.35;margin:10px 0 6px;text-align:center;white-space:nowrap">
       Al fichar aceptas el tratamiento de tus datos según la
       <a href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing"
@@ -67,11 +66,10 @@
 
     <div class="actions">
       <button class="b clear" id="btnClear">Borrar</button>
-      <button class="b send"  id="btnEnviar">Enviar</button>
+      <button class="b send" id="btnEnviar">Enviar</button>
     </div>
   </section>
 
-  <!-- Pie accesible fijo (opcional) -->
   <div style="position:sticky;bottom:8px;text-align:center">
     <a href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing"
        target="_blank" rel="noopener"
@@ -88,7 +86,13 @@
 
 <script>
 const ENDPOINT="https://script.google.com/macros/s/AKfycbzQgMYWw08WXbJr5_SOhGKiHyqlU_Sh0ZU67dg2yS9DjDBMRMUbLemPBU9apPdKQa-c/exec";
-const WORKERS=["Luis Bou Garcia","Emilio Muñoz Usero","Emilio Fernandez Muñoz"];
+
+const WORKERS=[
+  "Luis Bou Garcia",
+  "Emilio Muñoz Usero",
+  "Emilio Fernandez Muñoz",
+  "Fernando Lloris Sánchez"
+];
 
 const grid=document.getElementById('grid');
 const bar=document.getElementById('bar'), barMsg=document.getElementById('barMsg');
@@ -96,74 +100,195 @@ const hiddenFrame=document.getElementById('hiddenFrame');
 const beepTag=document.getElementById('beepAudio');
 
 let nombre=null,tipo=null,sending=false;
-function setBar(msg,ok=true){barMsg.textContent=msg;barMsg.className=ok?'msg-ok':'msg-err';bar.hidden=false;}
-function beepOk(){try{beepTag.currentTime=0;beepTag.play().catch(()=>{});}catch{}}
+
+function setBar(msg,ok=true){
+  barMsg.textContent=msg;
+  barMsg.className=ok?'msg-ok':'msg-err';
+  bar.hidden=false;
+}
+
+function beepOk(){
+  try{
+    beepTag.currentTime=0;
+    beepTag.play().catch(()=>{});
+  }catch{}
+}
 
 WORKERS.forEach(N=>{
-  const row=document.createElement('div');row.className='row';
-  const name=document.createElement('div');name.className='name';name.textContent=N;
-  const btns=document.createElement('div');btns.className='btns';
-  const bIn=document.createElement('div');bIn.className='btn in';bIn.textContent='Entrada';
-  const bOut=document.createElement('div');bOut.className='btn out';bOut.textContent='Salida';
+  const row=document.createElement('div');
+  row.className='row';
+
+  const name=document.createElement('div');
+  name.className='name';
+  name.textContent=N;
+
+  const btns=document.createElement('div');
+  btns.className='btns';
+
+  const bIn=document.createElement('div');
+  bIn.className='btn in';
+  bIn.textContent='Entrada';
+
+  const bOut=document.createElement('div');
+  bOut.className='btn out';
+  bOut.textContent='Salida';
+
   bIn.onclick=()=>pick(N,'entrada',bIn);
   bOut.onclick=()=>pick(N,'salida',bOut);
-  btns.appendChild(bIn);btns.appendChild(bOut);
-  row.appendChild(name);row.appendChild(btns);
+
+  btns.appendChild(bIn);
+  btns.appendChild(bOut);
+  row.appendChild(name);
+  row.appendChild(btns);
   grid.appendChild(row);
 });
 
 function pick(n,t,btn){
   if(sending) return;
-  nombre=n; tipo=t;
+  nombre=n;
+  tipo=t;
   setBar(`Seleccionado: ${n} · ${t.toUpperCase()}. Firma y pulsa Enviar.`,true);
 }
 
 const sig=document.getElementById('sig');
 const ctx=sig.getContext('2d',{willReadFrequently:true});
+
 let drawing=false, hasStroke=false, last={x:0,y:0};
 
 function paintWhite(){
-  ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,sig.width,sig.height); ctx.restore();
+  ctx.save();
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle="#fff";
+  ctx.fillRect(0,0,sig.width,sig.height);
+  ctx.restore();
 }
+
 function fit(){
   const r=Math.max(devicePixelRatio||1,1);
-  const w=sig.clientWidth||400, h=sig.clientHeight||160;
-  sig.width=Math.round(w*r); sig.height=Math.round(h*r);
-  ctx.setTransform(r,0,0,r,0,0); paintWhite();
-  ctx.lineCap='round'; ctx.lineJoin='round'; ctx.lineWidth=3.2; ctx.strokeStyle='#000';
-}
-fit();
-addEventListener('resize',()=>{const img=sig.toDataURL('image/png'); fit(); const im=new Image(); im.onload=()=>ctx.drawImage(im,0,0,sig.clientWidth,sig.clientHeight); im.src=img;});
-function pos(e){const r=sig.getBoundingClientRect(); return {x:(e.touches?e.touches[0].clientX:e.clientX)-r.left, y:(e.touches?e.touches[0].clientY:e.clientY)-r.top};}
-function start(e){drawing=true; last=pos(e); e.preventDefault();}
-function move(e){if(!drawing)return; const p=pos(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; hasStroke=true; e.preventDefault();}
-function end(){drawing=false;}
-sig.addEventListener('mousedown',start); sig.addEventListener('mousemove',move); addEventListener('mouseup',end);
-sig.addEventListener('touchstart',start,{passive:false}); sig.addEventListener('touchmove',move,{passive:false}); sig.addEventListener('touchend',end);
+  const w=sig.clientWidth||400;
+  const h=sig.clientHeight||160;
 
-document.getElementById('btnClear').onclick=()=>{ paintWhite(); hasStroke=false; setBar('Firma borrada.',true); };
+  sig.width=Math.round(w*r);
+  sig.height=Math.round(h*r);
+
+  ctx.setTransform(r,0,0,r,0,0);
+  paintWhite();
+
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.lineWidth=3.2;
+  ctx.strokeStyle='#000';
+}
+
+fit();
+
+addEventListener('resize',()=>{
+  const img=sig.toDataURL('image/png');
+  fit();
+
+  const im=new Image();
+  im.onload=()=>ctx.drawImage(im,0,0,sig.clientWidth,sig.clientHeight);
+  im.src=img;
+});
+
+function pos(e){
+  const r=sig.getBoundingClientRect();
+  return {
+    x:(e.touches?e.touches[0].clientX:e.clientX)-r.left,
+    y:(e.touches?e.touches[0].clientY:e.clientY)-r.top
+  };
+}
+
+function start(e){
+  drawing=true;
+  last=pos(e);
+  e.preventDefault();
+}
+
+function move(e){
+  if(!drawing) return;
+
+  const p=pos(e);
+  ctx.beginPath();
+  ctx.moveTo(last.x,last.y);
+  ctx.lineTo(p.x,p.y);
+  ctx.stroke();
+
+  last=p;
+  hasStroke=true;
+  e.preventDefault();
+}
+
+function end(){
+  drawing=false;
+}
+
+sig.addEventListener('mousedown',start);
+sig.addEventListener('mousemove',move);
+addEventListener('mouseup',end);
+
+sig.addEventListener('touchstart',start,{passive:false});
+sig.addEventListener('touchmove',move,{passive:false});
+sig.addEventListener('touchend',end);
+
+document.getElementById('btnClear').onclick=()=>{
+  paintWhite();
+  hasStroke=false;
+  setBar('Firma borrada.',true);
+};
 
 document.getElementById('btnEnviar').onclick=async()=>{
   if(sending) return;
-  if(!nombre||!tipo){ setBar('Selecciona trabajador y tipo.',false); return; }
-  if(!hasStroke){ setBar('Firma requerida.',false); return; }
-  sending=true; setBar('Enviando…',true);
+
+  if(!nombre||!tipo){
+    setBar('Selecciona trabajador y tipo.',false);
+    return;
+  }
+
+  if(!hasStroke){
+    setBar('Firma requerida.',false);
+    return;
+  }
+
+  sending=true;
+  setBar('Enviando…',true);
+
   try{
-    // fondo blanco bajo trazo
-    ctx.save(); ctx.globalCompositeOperation='destination-over'; ctx.fillStyle='#fff'; ctx.fillRect(0,0,sig.width,sig.height); ctx.restore();
+    ctx.save();
+    ctx.globalCompositeOperation='destination-over';
+    ctx.fillStyle='#fff';
+    ctx.fillRect(0,0,sig.width,sig.height);
+    ctx.restore();
 
-    const dataURL = sig.toDataURL('image/png'); // firma base64
-    const txId = 'tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    const dataURL=sig.toDataURL('image/png');
+    const txId='tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
 
-    // POST firma (JSON plano) y GET fichaje en paralelo
-    const payload = JSON.stringify({ nombre, tipo, firma: dataURL, txId });
-    fetch(ENDPOINT,{ method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'}, body:payload }).catch(()=>{});
-    hiddenFrame.src = `${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}&t=${Date.now()}`;
+    const payload=JSON.stringify({
+      nombre,
+      tipo,
+      firma:dataURL,
+      txId
+    });
 
-    setTimeout(()=>{ beepOk(); setBar(`OK ${nombre} — ${tipo.toUpperCase()} · ${new Date().toLocaleTimeString('es-ES')}`, true); paintWhite(); hasStroke=false; sending=false; }, 1200);
+    fetch(ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},
+      body:payload
+    }).catch(()=>{});
+
+    hiddenFrame.src=`${ENDPOINT}?nombre=${encodeURIComponent(nombre)}&tipo=${encodeURIComponent(tipo)}&t=${Date.now()}`;
+
+    setTimeout(()=>{
+      beepOk();
+      setBar(`OK ${nombre} — ${tipo.toUpperCase()} · ${new Date().toLocaleTimeString('es-ES')}`,true);
+      paintWhite();
+      hasStroke=false;
+      sending=false;
+    },1200);
+
   }catch(_){
-    setBar('Error de red', false); sending=false;
+    setBar('Error de red',false);
+    sending=false;
   }
 };
 </script>
