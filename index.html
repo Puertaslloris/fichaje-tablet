@@ -5,62 +5,127 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Fichaje Puertas Lloris</title>
 <style>
-  :root{--gap:10px;--btnH:40px;--btnFS:14px;--nameFS:14px}
+  :root{--gap:5px;--btnH:34px;--btnFS:12px;--nameFS:12px}
   *{box-sizing:border-box}
   html,body{height:100%}
   body{margin:0;font-family:system-ui,Arial,sans-serif;background:#edf1f5;color:#0f172a}
-  .wrap{max-width:880px;margin:4px auto;padding:0 8px}
-  h1{margin:4px 0 6px;text-align:center;font-size:18px;font-weight:800}
-  .bar{position:fixed;left:50%;top:6px;transform:translateX(-50%);
-       width:min(860px,94vw);background:#fff;border-radius:10px;
-       box-shadow:0 8px 20px rgba(0,0,0,.15);
-       padding:6px 10px;display:flex;align-items:center;justify-content:center;
-       font-weight:700;font-size:14px;z-index:20}
-  .msg-ok{color:#0f6b35}.msg-err{color:#a21919}.bar[hidden]{display:none}
-  .spacer{height:38px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .row{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);
-       padding:8px;display:flex;flex-direction:column;align-items:center}
-  .name{font-weight:700;font-size:var(--nameFS);margin-bottom:6px;text-align:center}
-  .btns{display:flex;gap:8px;width:100%;justify-content:center}
-  .btn{position:relative;flex:1;min-width:90px;height:var(--btnH);border-radius:10px;color:#fff;font-weight:700;
-       font-size:var(--btnFS);display:flex;align-items:center;justify-content:center;user-select:none;cursor:pointer;
-       box-shadow:0 3px 8px rgba(0,0,0,.08)}
+
+  .wrap{max-width:880px;margin:1px auto;padding:0 5px}
+  h1{margin:1px 0 4px;text-align:center;font-size:15px;font-weight:800}
+
+  .bar{
+    position:fixed;left:50%;top:4px;transform:translateX(-50%);
+    width:min(860px,94vw);background:#fff;border-radius:8px;
+    box-shadow:0 6px 16px rgba(0,0,0,.15);
+    padding:4px 8px;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:12px;z-index:20
+  }
+
+  .msg-ok{color:#0f6b35}
+  .msg-err{color:#a21919}
+  .bar[hidden]{display:none}
+
+  .spacer{height:28px}
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:5px
+  }
+
+  .row{
+    background:#fff;border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,.06);
+    padding:4px;display:flex;flex-direction:column;align-items:center
+  }
+
+  .name{
+    font-weight:700;font-size:var(--nameFS);
+    margin-bottom:2px;text-align:center
+  }
+
+  .btns{
+    display:flex;gap:4px;width:100%;justify-content:center
+  }
+
+  .btn{
+    position:relative;flex:1;min-width:70px;height:var(--btnH);
+    border-radius:8px;color:#fff;font-weight:700;
+    font-size:var(--btnFS);display:flex;align-items:center;
+    justify-content:center;user-select:none;cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.08)
+  }
+
   .btn:active{transform:translateY(1px)}
   .in{background:linear-gradient(180deg,#168a40,#0f6b35)}
   .out{background:linear-gradient(180deg,#c43535,#a12626)}
+
   .btn[aria-busy="true"]::after{
-    content:"Enviando…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    border-radius:inherit;background:rgba(0,0,0,.22);color:#fff;font-weight:700;font-size:12px
+    content:"Enviando…";position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:inherit;background:rgba(0,0,0,.22);
+    color:#fff;font-weight:700;font-size:11px
   }
-  .card{width:min(420px,94vw);background:#fff;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,.08);padding:8px;margin:10px auto}
-  .card h3{margin:0 0 4px;font-size:12px;font-weight:700;text-align:center}
-  #sig{width:100%;height:160px;background:#fff;border:1.5px dashed #cbd5e1;border-radius:10px;touch-action:none}
-  .actions{display:flex;gap:8px;justify-content:center;margin-top:8px}
-  .actions .b{padding:10px 14px;border:0;border-radius:10px;font-weight:800;cursor:pointer}
+
+  .card{
+    width:min(400px,94vw);background:#fff;border-radius:9px;
+    box-shadow:0 4px 14px rgba(15,23,42,.08);
+    padding:4px;margin:5px auto
+  }
+
+  .card h3{
+    margin:0 0 2px;font-size:11px;
+    font-weight:700;text-align:center
+  }
+
+  #sig{
+    width:100%;height:95px;background:#fff;
+    border:1.5px dashed #cbd5e1;border-radius:8px;
+    touch-action:none
+  }
+
+  .actions{
+    display:flex;gap:6px;justify-content:center;margin-top:4px
+  }
+
+  .actions .b{
+    padding:6px 11px;border:0;border-radius:8px;
+    font-size:12px;font-weight:800;cursor:pointer
+  }
+
   .clear{background:#eef1f5;color:#111}
   .send{background:#1366ff;color:#fff}
 </style>
 </head>
+
 <body>
-<div id="bar" class="bar" hidden><span id="barMsg" class="msg-ok">Listo</span></div>
+
+<div id="bar" class="bar" hidden>
+  <span id="barMsg" class="msg-ok">Listo</span>
+</div>
+
 <div class="spacer" aria-hidden="true"></div>
 
 <div class="wrap">
+
   <h1>Fichaje Puertas Lloris</h1>
 
   <div id="grid" class="grid"></div>
 
   <section class="card">
     <h3>Firma</h3>
+
     <canvas id="sig"></canvas>
 
-    <p role="note" style="font-size:13px;line-height:1.35;margin:10px 0 6px;text-align:center;white-space:nowrap">
+    <p role="note" style="font-size:10px;line-height:1.2;margin:4px 0 3px;text-align:center">
       Al fichar aceptas el tratamiento de tus datos según la
-      <a href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing"
-         target="_blank" rel="noopener"
-         style="font-weight:600;text-decoration:underline;color:#0b57d0">
-         Política de Privacidad
+      <a
+        href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing"
+        target="_blank"
+        rel="noopener"
+        style="font-weight:600;text-decoration:underline;color:#0b57d0"
+      >
+        Política de Privacidad
       </a>.
     </p>
 
@@ -70,18 +135,26 @@
     </div>
   </section>
 
-  <div style="position:sticky;bottom:8px;text-align:center">
-    <a href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing"
-       target="_blank" rel="noopener"
-       style="display:inline-block;padding:6px 10px;border-radius:8px;background:#eef3ff;color:#0b57d0;font-weight:700;text-decoration:none">
-       Ver Política de Privacidad
+  <div style="position:sticky;bottom:4px;text-align:center">
+    <a
+      href="https://drive.google.com/file/d/1hFKu-LaTP4hrHfULnuWTNrslkh01Qmtu/view?usp=sharing"
+      target="_blank"
+      rel="noopener"
+      style="display:inline-block;padding:4px 8px;border-radius:7px;background:#eef3ff;color:#0b57d0;font-size:10px;font-weight:700;text-decoration:none"
+    >
+      Ver Política de Privacidad
     </a>
   </div>
+
 </div>
 
 <iframe id="hiddenFrame" name="hiddenFrame" style="display:none"></iframe>
+
 <audio id="beepAudio" preload="auto">
-  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  <source
+    src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+    type="audio/ogg"
+  >
 </audio>
 
 <script>
@@ -167,7 +240,7 @@ function paintWhite(){
 function fit(){
   const r=Math.max(devicePixelRatio||1,1);
   const w=sig.clientWidth||400;
-  const h=sig.clientHeight||160;
+  const h=sig.clientHeight||95;
 
   sig.width=Math.round(w*r);
   sig.height=Math.round(h*r);
@@ -293,5 +366,6 @@ document.getElementById('btnEnviar').onclick=async()=>{
   }
 };
 </script>
+
 </body>
 </html>
